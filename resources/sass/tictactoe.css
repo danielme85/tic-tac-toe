@@ -1,0 +1,7 @@
+.grid-cell {
+    border: solid black 1px;
+    height: 100px;
+    color: black;
+    font-size: 54px;
+    font-weight: bold;
+}
