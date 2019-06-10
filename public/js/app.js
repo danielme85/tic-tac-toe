@@ -1842,6 +1842,7 @@ __webpack_require__.r(__webpack_exports__);
         uid: uid
       }).then(function (response) {
         _this3.state = response.data.state;
+        _this3.gameUid = response.data.gameUid;
       })["catch"](function (error) {
         _this3.errors.push(error.message);
       });

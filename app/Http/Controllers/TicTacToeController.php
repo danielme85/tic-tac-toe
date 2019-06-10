@@ -6,12 +6,20 @@ use App\Game;
 use App\Player;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
 
 class TicTacToeController extends Controller
 {
     public function index()
     {
         return view('index');
+    }
+
+    public function checkForCurrentGame()
+    {
+        return response()->json([
+            'game-uid' => Session::get('tic-tac-toe-game-uid')
+        ]);
     }
 
     public function checkForCurrentPlayer()
@@ -30,13 +38,16 @@ class TicTacToeController extends Controller
 
         $game = new Game();
         $game->board = $this->createNewBoard();
-        $game->playerX()->save($player);
-        $game->playerO()->save($computer);
+        $game->playerX()->attach($player);
+        $game->playerO()->attach($computer);
+        $game->save();
+
+        Session::put('tic-tac-toe-game-uid', $game->uid);
 
         return response()->json(
             [
                 'state' => 'new',
-                'game-uid' => $game->uid
+                'gameUid' => $game->uid
             ]);
     }
 

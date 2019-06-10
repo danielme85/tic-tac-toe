@@ -108,6 +108,7 @@
                     })
                     .then(response => {
                         this.state = response.data.state;
+                        this.gameUid = response.data.gameUid;
                     })
                     .catch(error => {
                         this.errors.push(error.message);

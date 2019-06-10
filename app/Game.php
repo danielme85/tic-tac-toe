@@ -18,12 +18,12 @@ class Game extends Model
 
     public function playerX()
     {
-        return $this->hasOne(Player::class, 'player_id_x', 'id');
+        return $this->belongsTo(Player::class, 'player_id_x', 'id');
     }
 
     public function playerO()
     {
-        return $this->hasOne(Player::class, 'player_id_O', 'id');
+        return $this->belongsTo(Player::class, 'player_id_O', 'id');
     }
 
     public function getBoardAttribute()
