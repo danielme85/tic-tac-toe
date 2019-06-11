@@ -4,6 +4,9 @@
             <div class="card">
                 <div class="card-header">Tic-Tac-Toe # Status:<span>{{state}}</span></div>
                 <div class="card-body">
+                    <div v-if="loading">
+                        <p>Please wait, loading data....</p>
+                    </div>
                     <div v-if="gameUid && !loading && players">
                         <div class="row" style="margin-top:25px; margin-bottom:25px;">
                             <div class="col-12 text-center">
@@ -86,6 +89,7 @@
         data: function() {
             return {
                 loading: true,
+                done: false,
                 state: false,
                 gameUid: null,
                 errors: [],
@@ -106,18 +110,22 @@
                 axios.get('/api/clearcurrentplayer')
                     .then(response => {
                         this.state = false;
+                        this.done = false;
                         this.gameUid = null;
                         this.players = null;
                         this.turn = 'X';
                         this.newPlayerName = null;
                         this.nameValidationErrors = null
+                        this.loading = false;
                     })
                     .catch(error => {
                         this.errors.push(error.message);
+                        this.loading = false;
                     });
             },
             clickBox: function (event) {
                 if (this.state !== 'winner' || this.state !== 'draw') {
+                    this.updateBoard(event.target.id, 'X');
                     this.setPlayerMove(event.target.id, 'X');
                 }
             },
@@ -141,15 +149,18 @@
                     })
                     .then(response => {
                         this.newGame(response.data.player.uid);
+                        this.loading = false;
                     })
                     .catch(error => {
                         this.errors.push(error.message);
+                        this.loading = false;
                         if (error.response.status === 422){
                             this.nameValidationErrors = error.response.data.errors['name'];
                         }
                     });
             },
             newGame: function (uid) {
+                this.loading = true;
                 this.clearBoard();
                 this.getHighScores();
                 axios.post('/api/newgame', {
@@ -157,11 +168,13 @@
                     })
                     .then(response => {
                         this.state = response.data.state;
+                        this.done = false;
                         this.gameUid = response.data.gameUid;
                         this.players = response.data.players;
                         this.loading = false;
                     })
                     .catch(error => {
+                        this.loading = false;
                         this.errors.push(error.message);
                     });
             },
@@ -182,11 +195,12 @@
                     })
                     .then(response => {
                         this.state = response.data.state;
-                        if (response.data.moveX) {
-                            this.updateBoard(response.data.move, 'X');
-                        }
-                        if (response.data.moveO) {
+                        this.checkIfdone();
+                        this.turn = 'O';
+                        if (this.done === false && response.data.move) {
                             this.updateBoard(response.data.move, 'O');
+                            this.checkIfdone();
+                            this.turn = 'X';
                         }
                     })
                     .catch(error => {
@@ -194,8 +208,6 @@
                     });
             },
             updateBoard(rowcell, value) {
-                this.checkIfdone();
-
                 if (rowcell || value) {
                     let $target = $('#' + rowcell);
                     $target.attr("disabled", true);
@@ -209,6 +221,7 @@
             },
             checkIfdone() {
                 if (this.state === 'winner' || this.state === 'draw') {
+                    this.done = true;
                     $('.grid-cell').attr("disabled", true);
                 }
                 if (this.state === 'winner') {
@@ -217,14 +230,6 @@
                 }
                 else if (this.state === 'draw') {
                     alert('Oh boi its a draw!');
-
-                }
-                if (this.turn === 'X')
-                {
-                    this.turn = 'O';
-                }
-                else {
-                    this.turn = 'X';
                 }
             }
         },

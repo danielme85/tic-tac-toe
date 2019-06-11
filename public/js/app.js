@@ -1813,12 +1813,16 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
       loading: true,
+      done: false,
       state: false,
       gameUid: null,
       errors: [],
@@ -1840,17 +1844,22 @@ __webpack_require__.r(__webpack_exports__);
       this.loading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/clearcurrentplayer').then(function (response) {
         _this.state = false;
+        _this.done = false;
         _this.gameUid = null;
         _this.players = null;
         _this.turn = 'X';
         _this.newPlayerName = null;
         _this.nameValidationErrors = null;
+        _this.loading = false;
       })["catch"](function (error) {
         _this.errors.push(error.message);
+
+        _this.loading = false;
       });
     },
     clickBox: function clickBox(event) {
       if (this.state !== 'winner' || this.state !== 'draw') {
+        this.updateBoard(event.target.id, 'X');
         this.setPlayerMove(event.target.id, 'X');
       }
     },
@@ -1874,8 +1883,12 @@ __webpack_require__.r(__webpack_exports__);
         name: this.newPlayerName
       }).then(function (response) {
         _this3.newGame(response.data.player.uid);
+
+        _this3.loading = false;
       })["catch"](function (error) {
         _this3.errors.push(error.message);
+
+        _this3.loading = false;
 
         if (error.response.status === 422) {
           _this3.nameValidationErrors = error.response.data.errors['name'];
@@ -1885,16 +1898,20 @@ __webpack_require__.r(__webpack_exports__);
     newGame: function newGame(uid) {
       var _this4 = this;
 
+      this.loading = true;
       this.clearBoard();
       this.getHighScores();
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/newgame', {
         uid: uid
       }).then(function (response) {
         _this4.state = response.data.state;
+        _this4.done = false;
         _this4.gameUid = response.data.gameUid;
         _this4.players = response.data.players;
         _this4.loading = false;
       })["catch"](function (error) {
+        _this4.loading = false;
+
         _this4.errors.push(error.message);
       });
     },
@@ -1917,20 +1934,22 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (response) {
         _this6.state = response.data.state;
 
-        if (response.data.moveX) {
-          _this6.updateBoard(response.data.move, 'X');
-        }
+        _this6.checkIfdone();
 
-        if (response.data.moveO) {
+        _this6.turn = 'O';
+
+        if (_this6.done === false && response.data.move) {
           _this6.updateBoard(response.data.move, 'O');
+
+          _this6.checkIfdone();
+
+          _this6.turn = 'X';
         }
       })["catch"](function (error) {
         _this6.errors.push(error.message);
       });
     },
     updateBoard: function updateBoard(rowcell, value) {
-      this.checkIfdone();
-
       if (rowcell || value) {
         var $target = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#' + rowcell);
         $target.attr("disabled", true);
@@ -1943,6 +1962,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     checkIfdone: function checkIfdone() {
       if (this.state === 'winner' || this.state === 'draw') {
+        this.done = true;
         jquery__WEBPACK_IMPORTED_MODULE_1___default()('.grid-cell').attr("disabled", true);
       }
 
@@ -1951,12 +1971,6 @@ __webpack_require__.r(__webpack_exports__);
         alert('And the winner is:' + player.name);
       } else if (this.state === 'draw') {
         alert('Oh boi its a draw!');
-      }
-
-      if (this.turn === 'X') {
-        this.turn = 'O';
-      } else {
-        this.turn = 'X';
       }
     }
   }
@@ -37315,6 +37329,10 @@ var render = function() {
           ]),
           _vm._v(" "),
           _c("div", { staticClass: "card-body" }, [
+            _vm.loading
+              ? _c("div", [_c("p", [_vm._v("Please wait, loading data....")])])
+              : _vm._e(),
+            _vm._v(" "),
             _vm.gameUid && !_vm.loading && _vm.players
               ? _c("div", [
                   _c(

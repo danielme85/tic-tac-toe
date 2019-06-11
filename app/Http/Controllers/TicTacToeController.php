@@ -97,6 +97,7 @@ class TicTacToeController extends Controller
 
     public function setPlayerMove(Request $request)
     {
+        $returnMove = null;
         $game = Game::where('uid', '=', $request->input('gameuid'))->firstOrFail();
         $board = $game->board;
         $newmove = $request->input('rowcell');
@@ -118,48 +119,40 @@ class TicTacToeController extends Controller
             $human->increment('wins');
             $human->save();
 
-            $response = [
-                'state' => 'winner',
-                'board' => $board,
-            ];
+            $state = 'winner';
         }
         else if ($computerMove = $this->computerMove($board)) {
             $game->board = $computerMove['board'];
 
             $move = new Move();
-            $move->move = $newmove;
+            $move->move = $computerMove['move'];
             $move->player()->associate($game->playerO);
             $move->save();
             $game->moves()->attach($move->id);
-
             $game->save();
+
+            $returnMove = $computerMove['move'];
 
             if($this->checkForBingo($computerMove['board'])) {
                 $computer = $game->playerO;
                 $computer->increment('wins');
                 $computer->save();
 
-                $response = [
-                    'state' => 'winner',
-                    'board' => $board,
-                ];
+                $state = 'winner';
             }
             else {
-                $response  = [
-                    'state' => 'inprogress',
-                    'board' => $computerMove['board'],
-                    'move' => $computerMove['move']
-                ];
+                $state = 'inprogress';
             }
         }
         else {
-            $response = [
-                'state' => 'draw',
-                'board' => $board,
-            ];
+            $state = 'draw';
         }
 
-        return response()->json($response);
+        return response()->json([
+            'state' => $state,
+            'move' => $returnMove,
+
+        ]);
     }
 
     private function computerMove($board)
@@ -185,8 +178,6 @@ class TicTacToeController extends Controller
     {
         $bingo = false;
         $i = 1;
-
-        dump($board);
 
         while ($i <= 3) {
             //if 1 = 2 and 1 = 3 then 2 most also = 3
