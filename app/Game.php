@@ -8,6 +8,8 @@ class Game extends Model
 {
     protected $table = 'games';
 
+    protected $hidden = ['id'];
+
     public static function boot()
     {
         parent::boot();
@@ -23,7 +25,7 @@ class Game extends Model
 
     public function playerO()
     {
-        return $this->belongsTo(Player::class, 'player_id_O', 'id');
+        return $this->belongsTo(Player::class, 'player_id_o', 'id');
     }
 
     public function moves()

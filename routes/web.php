@@ -12,9 +12,11 @@
 */
 
 Route::get('/', 'TicTacToeController@index');
+Route::get('/api/gethighscores', 'TicTacToeController@getHighScores');
 Route::get('/api/checkforcurrentplayer', 'TicTacToeController@checkForCurrentPlayer');
 Route::post('/api/newplayer', 'TicTacToeController@newPlayer');
 Route::post('/api/newgame', 'TicTacToeController@newGame');
 Route::post('/api/setplayermove', 'TicTacToeController@setPlayerMove');
 Route::post('/api/getcomputermove', 'TicTacToeController@setPlayerMove');
+Route::get('/api/clearcurrentplayer', 'TicTacToeController@clearCurrentPlayer');
 

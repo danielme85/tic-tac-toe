@@ -1786,6 +1786,33 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -1795,93 +1822,141 @@ __webpack_require__.r(__webpack_exports__);
       state: false,
       gameUid: null,
       errors: [],
-      players: [],
+      players: null,
       turn: 'X',
       newPlayerName: null,
-      nameValidationErrors: null
+      nameValidationErrors: null,
+      highScores: null
     };
   },
   mounted: function mounted() {
     this.checkForCurrentPlayer();
+    this.getHighScores();
   },
   methods: {
-    clickBox: function clickBox(event) {
-      this.updateBoard(event.target.id, 'X');
+    clearCurrentPlayer: function clearCurrentPlayer() {
+      var _this = this;
 
+      this.loading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/clearcurrentplayer').then(function (response) {
+        _this.state = false;
+        _this.gameUid = null;
+        _this.players = null;
+        _this.turn = 'X';
+        _this.newPlayerName = null;
+        _this.nameValidationErrors = null;
+      })["catch"](function (error) {
+        _this.errors.push(error.message);
+      });
+    },
+    clickBox: function clickBox(event) {
       if (this.state !== 'winner' || this.state !== 'draw') {
         this.setPlayerMove(event.target.id, 'X');
       }
     },
     checkForCurrentPlayer: function checkForCurrentPlayer() {
-      var _this = this;
+      var _this2 = this;
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/checkforcurrentplayer').then(function (response) {
         if (response.data.player) {
-          _this.newGame(response.data.player.uid);
+          _this2.newGame(response.data.player.uid);
+        } else {
+          _this2.loading = false;
         }
       })["catch"](function (error) {
-        _this.errors.push(error.message);
+        _this2.errors.push(error.message);
       });
     },
     newPlayer: function newPlayer() {
-      var _this2 = this;
+      var _this3 = this;
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/newplayer', {
         name: this.newPlayerName
       }).then(function (response) {
-        _this2.newGame(response.data.player.uid);
+        _this3.newGame(response.data.player.uid);
       })["catch"](function (error) {
-        _this2.errors.push(error.message);
+        _this3.errors.push(error.message);
 
         if (error.response.status === 422) {
-          _this2.nameValidationErrors = error.response.data.errors['name'];
+          _this3.nameValidationErrors = error.response.data.errors['name'];
         }
       });
     },
     newGame: function newGame(uid) {
-      var _this3 = this;
+      var _this4 = this;
 
+      this.clearBoard();
+      this.getHighScores();
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/newgame', {
         uid: uid
       }).then(function (response) {
-        _this3.state = response.data.state;
-        _this3.gameUid = response.data.gameUid;
-        _this3.players = response.data.players;
+        _this4.state = response.data.state;
+        _this4.gameUid = response.data.gameUid;
+        _this4.players = response.data.players;
+        _this4.loading = false;
       })["catch"](function (error) {
-        _this3.errors.push(error.message);
+        _this4.errors.push(error.message);
+      });
+    },
+    getHighScores: function getHighScores() {
+      var _this5 = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get('/api/gethighscores').then(function (response) {
+        _this5.highScores = response.data;
+      })["catch"](function (error) {
+        _this5.errors.push(error.message);
       });
     },
     setPlayerMove: function setPlayerMove(rowcell) {
-      var _this4 = this;
+      var _this6 = this;
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/setplayermove', {
         rowcell: rowcell,
         gameuid: this.gameUid,
         value: 'X'
       }).then(function (response) {
-        _this4.state = response.data.state;
+        _this6.state = response.data.state;
 
-        _this4.checkIfdone();
+        if (response.data.moveX) {
+          _this6.updateBoard(response.data.move, 'X');
+        }
 
-        if (response.data.move) {
-          _this4.updateBoard(response.data.move, 'O');
+        if (response.data.moveO) {
+          _this6.updateBoard(response.data.move, 'O');
         }
       })["catch"](function (error) {
-        _this4.errors.push(error.message);
+        _this6.errors.push(error.message);
       });
     },
     updateBoard: function updateBoard(rowcell, value) {
+      this.checkIfdone();
+
       if (rowcell || value) {
         var $target = jquery__WEBPACK_IMPORTED_MODULE_1___default()('#' + rowcell);
         $target.attr("disabled", true);
         $target.html(value);
       }
     },
+    clearBoard: function clearBoard() {
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('.grid-cell').attr("disabled", false);
+      jquery__WEBPACK_IMPORTED_MODULE_1___default()('.grid-cell').html('');
+    },
     checkIfdone: function checkIfdone() {
       if (this.state === 'winner' || this.state === 'draw') {
         jquery__WEBPACK_IMPORTED_MODULE_1___default()('.grid-cell').attr("disabled", true);
+      }
+
+      if (this.state === 'winner') {
         var player = this.players[this.turn];
         alert('And the winner is:' + player.name);
+      } else if (this.state === 'draw') {
+        alert('Oh boi its a draw!');
+      }
+
+      if (this.turn === 'X') {
+        this.turn = 'O';
+      } else {
+        this.turn = 'X';
       }
     }
   }
@@ -37232,34 +37307,56 @@ var render = function() {
       staticStyle: { "margin-top": "50px" }
     },
     [
-      _c("div", { staticClass: "col-md-8" }, [
+      _c("div", { staticClass: "col-md-6" }, [
         _c("div", { staticClass: "card" }, [
           _c("div", { staticClass: "card-header" }, [
-            _vm._v("Tic-Tac-Toe #"),
+            _vm._v("Tic-Tac-Toe # Status:"),
             _c("span", [_vm._v(_vm._s(_vm.state))])
           ]),
           _vm._v(" "),
           _c("div", { staticClass: "card-body" }, [
-            _vm.gameUid
+            _vm.gameUid && !_vm.loading && _vm.players
               ? _c("div", [
+                  _c(
+                    "div",
+                    {
+                      staticClass: "row",
+                      staticStyle: {
+                        "margin-top": "25px",
+                        "margin-bottom": "25px"
+                      }
+                    },
+                    [
+                      _c("div", { staticClass: "col-12 text-center" }, [
+                        _c("b", [
+                          _vm._v(_vm._s(_vm.players["X"].name) + " (X)")
+                        ]),
+                        _vm._v(" VS "),
+                        _c("b", [
+                          _vm._v(_vm._s(_vm.players["O"].name) + " (O)")
+                        ])
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
                   _c("div", { staticClass: "row justify-content-center" }, [
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "1-1" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "1-2" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "1-3" },
                       on: { click: _vm.clickBox }
                     })
@@ -37268,21 +37365,21 @@ var render = function() {
                   _c("div", { staticClass: "row justify-content-center" }, [
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "2-1" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "2-2" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "2-3" },
                       on: { click: _vm.clickBox }
                     })
@@ -37291,27 +37388,65 @@ var render = function() {
                   _c("div", { staticClass: "row justify-content-center" }, [
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "3-1" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "3-2" },
                       on: { click: _vm.clickBox }
                     }),
                     _vm._v(" "),
                     _c("button", {
                       staticClass:
-                        "col-2 grid-cell d-flex align-items-center justify-content-center",
+                        "col-3 grid-cell d-flex align-items-center justify-content-center",
                       attrs: { id: "3-3" },
                       on: { click: _vm.clickBox }
                     })
-                  ])
+                  ]),
+                  _vm._v(" "),
+                  !_vm.loading
+                    ? _c("div", [
+                        _c(
+                          "div",
+                          {
+                            staticClass: "row",
+                            staticStyle: { "margin-top": "25px" }
+                          },
+                          [
+                            _c("div", { staticClass: "col-12 text-center" }, [
+                              _c("p", [
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-primary",
+                                    on: { click: _vm.checkForCurrentPlayer }
+                                  },
+                                  [_vm._v("New Game")]
+                                )
+                              ]),
+                              _vm._v(" "),
+                              _c("p", [
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-warning",
+                                    on: { click: _vm.clearCurrentPlayer }
+                                  },
+                                  [_vm._v("New Player")]
+                                )
+                              ])
+                            ])
+                          ]
+                        )
+                      ])
+                    : _vm._e()
                 ])
-              : _c("div", [
+              : !_vm.loading
+              ? _c("div", [
                   _c(
                     "form",
                     {
@@ -37382,6 +37517,29 @@ var render = function() {
                     ]
                   )
                 ])
+              : _vm._e()
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "col-md-4" }, [
+        _c("div", { staticClass: "card" }, [
+          _c("div", { staticClass: "card-header" }, [_vm._v("High Scores")]),
+          _vm._v(" "),
+          _c("div", { staticClass: "card-body" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-12" }, [
+                _c(
+                  "ul",
+                  _vm._l(_vm.highScores, function(player) {
+                    return _c("li", [
+                      _vm._v(_vm._s(player.name) + " -> " + _vm._s(player.wins))
+                    ])
+                  }),
+                  0
+                )
+              ])
+            ])
           ])
         ])
       ])

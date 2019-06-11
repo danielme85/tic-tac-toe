@@ -10,6 +10,8 @@ class Player extends Model
 
     protected $fillable = ['name'];
 
+    protected $hidden = ['id'];
+
     public static function boot()
     {
         parent::boot();

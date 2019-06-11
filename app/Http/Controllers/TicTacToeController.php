@@ -16,6 +16,11 @@ class TicTacToeController extends Controller
         return view('index');
     }
 
+    public function getHighScores()
+    {
+        return response()->json(Player::orderBy('wins', 'DESC')->get());
+    }
+
     public function checkForCurrentGame()
     {
         return response()->json([
@@ -51,6 +56,11 @@ class TicTacToeController extends Controller
                 'gameUid' => $game->uid,
                 'players' => ['X' => $player, 'O' => $computer]
             ]);
+    }
+
+    public function clearCurrentPlayer()
+    {
+        return response()->json(['message' => 'ok'])->withCookie(Cookie::forget('tic-tac-toe-player-uid'));
     }
 
     public function newPlayer(Request $request)
@@ -104,6 +114,10 @@ class TicTacToeController extends Controller
         $game->save();
 
         if($this->checkForBingo($board)) {
+            $human = $game->playerX;
+            $human->increment('wins');
+            $human->save();
+
             $response = [
                 'state' => 'winner',
                 'board' => $board,
@@ -114,16 +128,29 @@ class TicTacToeController extends Controller
 
             $move = new Move();
             $move->move = $newmove;
-            $move->player()->associate($game->playerX);
+            $move->player()->associate($game->playerO);
             $move->save();
             $game->moves()->attach($move->id);
 
             $game->save();
-            $response  = [
-                'state' => 'inprogress',
-                'board' => $computerMove['board'],
-                'move' => $computerMove['move']
-            ];
+
+            if($this->checkForBingo($computerMove['board'])) {
+                $computer = $game->playerO;
+                $computer->increment('wins');
+                $computer->save();
+
+                $response = [
+                    'state' => 'winner',
+                    'board' => $board,
+                ];
+            }
+            else {
+                $response  = [
+                    'state' => 'inprogress',
+                    'board' => $computerMove['board'],
+                    'move' => $computerMove['move']
+                ];
+            }
         }
         else {
             $response = [
@@ -175,7 +202,7 @@ class TicTacToeController extends Controller
                 $bingo = true;
                 break;
             }
-            if ($board[3][1] !== null and $board[1][1] === $board[2][2] and $board[2][2] === $board[1][3]) {
+            if ($board[3][1] !== null and $board[3][1] === $board[2][2] and $board[2][2] === $board[1][3]) {
                 $bingo = true;
                 break;
             }
