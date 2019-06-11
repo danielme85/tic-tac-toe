@@ -26,12 +26,17 @@ class Game extends Model
         return $this->belongsTo(Player::class, 'player_id_O', 'id');
     }
 
-    public function getBoardAttribute()
+    public function moves()
     {
-        return json_decode($this->board);
+        return $this->belongsToMany(Move::class, 'game_moves', 'game_id', 'move_id')->withTimestamps();;
     }
 
-    public function setBoardAttribute($board) {
-        $this->board = json_encode($board);
+    public function getBoardAttribute($value)
+    {
+        return json_decode($value, true);
+    }
+
+    public function setBoardAttribute($value) {
+        $this->attributes['board'] = json_encode($value);
     }
 }

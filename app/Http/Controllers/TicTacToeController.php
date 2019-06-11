@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Game;
+use App\Move;
 use App\Player;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -38,8 +39,8 @@ class TicTacToeController extends Controller
 
         $game = new Game();
         $game->board = $this->createNewBoard();
-        $game->playerX()->attach($player);
-        $game->playerO()->attach($computer);
+        $game->playerX()->associate($player);
+        $game->playerO()->associate($computer);
         $game->save();
 
         Session::put('tic-tac-toe-game-uid', $game->uid);
@@ -47,7 +48,8 @@ class TicTacToeController extends Controller
         return response()->json(
             [
                 'state' => 'new',
-                'gameUid' => $game->uid
+                'gameUid' => $game->uid,
+                'players' => ['X' => $player, 'O' => $computer]
             ]);
     }
 
@@ -85,75 +87,100 @@ class TicTacToeController extends Controller
 
     public function setPlayerMove(Request $request)
     {
-        $board = $request->input('board');
+        $game = Game::where('uid', '=', $request->input('gameuid'))->firstOrFail();
+        $board = $game->board;
         $newmove = $request->input('rowcell');
+
+        $move = new Move();
+        $move->move = $newmove;
+        $move->player()->associate($game->playerX);
+        $move->save();
+        $game->moves()->attach($move->id);
 
         $cords = explode('-', $newmove);
 
         $board[$cords[0]][$cords[1]] = 'X';
-
-
-        return response()->json($this->makeaMove($board));
-    }
-
-    private function makeaMove($board)
-    {
-        $decided = false;
-
-
-        //check for any O
-        foreach ($board as $cord => $value)
-        {
-
-            if ($value === 'O')
-            {
-                $this->findBestOption($board, $cord);
-            }
-        }
-
-        if (!$decided)
-        {
-            $row = random_int(1, 3);
-            $cell = random_int(1, 3);
-        }
-
-
-        $move = "$row-$cell";
-        $board[$row][$cell] = 'O';
+        $game->board = $board;
+        $game->save();
 
         if($this->checkForBingo($board)) {
-            return [
+            $response = [
                 'state' => 'winner',
                 'board' => $board,
-                'move' => $move
+            ];
+        }
+        else if ($computerMove = $this->computerMove($board)) {
+            $game->board = $computerMove['board'];
+
+            $move = new Move();
+            $move->move = $newmove;
+            $move->player()->associate($game->playerX);
+            $move->save();
+            $game->moves()->attach($move->id);
+
+            $game->save();
+            $response  = [
+                'state' => 'inprogress',
+                'board' => $computerMove['board'],
+                'move' => $computerMove['move']
+            ];
+        }
+        else {
+            $response = [
+                'state' => 'draw',
+                'board' => $board,
             ];
         }
 
-        return [
-            'state' => 'inprogress',
-            'board' => $board,
-            'move' => $move
-        ];
+        return response()->json($response);
     }
 
-    private function findBestOption($board, $current)
+    private function computerMove($board)
     {
-        //dump($board);
-        //dump($current);
-    }
+        $tries = 0;
 
+        while ($tries < 27) {
+            $tries++;
+            $row = random_int(1, 3);
+            $cell = random_int(1, 3);
+
+            if (empty($board[$row][$cell]))
+            {
+                $move = "$row-$cell";
+                $board[$row][$cell] = 'O';
+                return ['move' => $move, 'board' => $board];
+            }
+        }
+
+        return false;
+    }
     private function checkForBingo($board)
     {
         $bingo = false;
+        $i = 1;
 
         dump($board);
 
-        foreach ($board as $row) {
+        while ($i <= 3) {
             //if 1 = 2 and 1 = 3 then 2 most also = 3
-            if ($row[1] !== null and $row[1] === $row[2] and $row[1] === $row[3]) {
+            if ($board[$i][1] !== null and $board[$i][1] === $board[$i][2] and $board[$i][1] === $board[$i][3]) {
                 $bingo = true;
                 break;
             }
+            if ($board[1][$i] !== null and $board[1][$i] === $board[2][$i] and $board[1][$i] === $board[3][$i]) {
+                $bingo = true;
+                break;
+            }
+            if ($board[1][1] !== null and $board[1][1] === $board[2][2] and $board[2][2] === $board[3][3]) {
+                $bingo = true;
+                break;
+            }
+            if ($board[3][1] !== null and $board[1][1] === $board[2][2] and $board[2][2] === $board[1][3]) {
+                $bingo = true;
+                break;
+            }
+
+            $i++;
         }
 
         return $bingo;

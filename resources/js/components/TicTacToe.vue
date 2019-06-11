@@ -58,6 +58,7 @@
     export default {
         data: function() {
             return {
+                loading: true,
                 state: false,
                 gameUid: null,
                 errors: [],
@@ -93,7 +94,7 @@
                     name: this.newPlayerName
                     })
                     .then(response => {
-
+                        this.newGame(response.data.player.uid);
                     })
                     .catch(error => {
                         this.errors.push(error.message);
@@ -109,6 +110,7 @@
                     .then(response => {
                         this.state = response.data.state;
                         this.gameUid = response.data.gameUid;
+                        this.players = response.data.players;
                     })
                     .catch(error => {
                         this.errors.push(error.message);
@@ -117,17 +119,19 @@
             setPlayerMove(rowcell) {
                 axios.post('/api/setplayermove', {
                     rowcell: rowcell,
+                    gameuid: this.gameUid,
                     value: 'X'
                     })
                     .then(response => {
                         this.state = response.data.state;
+                        this.checkIfdone();
                         if (response.data.move) {
                             this.updateBoard(response.data.move, 'O');
                         }
                     })
                     .catch(error => {
                         this.errors.push(error.message);
-                    })
+                    });
             },
             updateBoard(rowcell, value) {
                 if (rowcell || value) {
@@ -136,33 +140,16 @@
 
                     $target.html(value);
                 }
-                this.checkIfdone();
-
-
             },
             checkIfdone()
             {
-                if (this.turn === 'X')
-                {
-                    this.turn = 'O';
-                }
-                else {
-                    this.turn = 'X';
-                }
 
                 if (this.state === 'winner' || this.state === 'draw')
                 {
                     $('.grid-cell').attr("disabled", true);
-                    let player = this.getPlayerBasedOnId(this.turn);
+                    let player = this.players[this.turn];
                     alert('And the winner is:' + player.name);
                 }
-            },
-            getPlayerBasedOnId(id) {
-                let player = this.players.find(function (search) {
-                    return search.id === id;
-                });
-
-                return player;
             }
         },
     }

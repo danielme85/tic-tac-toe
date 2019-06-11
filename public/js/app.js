@@ -1791,6 +1791,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
+      loading: true,
       state: false,
       gameUid: null,
       errors: [],
@@ -1827,7 +1828,9 @@ __webpack_require__.r(__webpack_exports__);
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/newplayer', {
         name: this.newPlayerName
-      }).then(function (response) {})["catch"](function (error) {
+      }).then(function (response) {
+        _this2.newGame(response.data.player.uid);
+      })["catch"](function (error) {
         _this2.errors.push(error.message);
 
         if (error.response.status === 422) {
@@ -1843,6 +1846,7 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (response) {
         _this3.state = response.data.state;
         _this3.gameUid = response.data.gameUid;
+        _this3.players = response.data.players;
       })["catch"](function (error) {
         _this3.errors.push(error.message);
       });
@@ -1852,9 +1856,12 @@ __webpack_require__.r(__webpack_exports__);
 
       axios__WEBPACK_IMPORTED_MODULE_0___default.a.post('/api/setplayermove', {
         rowcell: rowcell,
+        gameuid: this.gameUid,
         value: 'X'
       }).then(function (response) {
         _this4.state = response.data.state;
+
+        _this4.checkIfdone();
 
         if (response.data.move) {
           _this4.updateBoard(response.data.move, 'O');
@@ -1869,27 +1876,13 @@ __webpack_require__.r(__webpack_exports__);
         $target.attr("disabled", true);
         $target.html(value);
       }
-
-      this.checkIfdone();
     },
     checkIfdone: function checkIfdone() {
-      if (this.turn === 'X') {
-        this.turn = 'O';
-      } else {
-        this.turn = 'X';
-      }
-
       if (this.state === 'winner' || this.state === 'draw') {
         jquery__WEBPACK_IMPORTED_MODULE_1___default()('.grid-cell').attr("disabled", true);
-        var player = this.getPlayerBasedOnId(this.turn);
+        var player = this.players[this.turn];
         alert('And the winner is:' + player.name);
       }
-    },
-    getPlayerBasedOnId: function getPlayerBasedOnId(id) {
-      var player = this.players.find(function (search) {
-        return search.id === id;
-      });
-      return player;
     }
   }
 });
@@ -49858,8 +49851,8 @@ __webpack_require__.r(__webpack_exports__);
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! C:\Users\danielme\projects\tic-tac-toe\resources\js\app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! C:\Users\danielme\projects\tic-tac-toe\resources\sass\app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/danielmellum/PhpstormProjects/tic-tac-toe/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/danielmellum/PhpstormProjects/tic-tac-toe/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })
