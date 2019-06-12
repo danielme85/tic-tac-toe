@@ -97,6 +97,7 @@ class TicTacToeController extends Controller
 
     public function setPlayerMove(Request $request)
     {
+        $winner = null;
         $returnMove = null;
         $game = Game::where('uid', '=', $request->input('gameuid'))->firstOrFail();
         $board = $game->board;
@@ -120,6 +121,7 @@ class TicTacToeController extends Controller
             $human->save();
 
             $state = 'winner';
+            $winner = 'X';
         }
         else if ($computerMove = $this->computerMove($board)) {
             $game->board = $computerMove['board'];
@@ -139,6 +141,7 @@ class TicTacToeController extends Controller
                 $computer->save();
 
                 $state = 'winner';
+                $winner = 'O';
             }
             else {
                 $state = 'inprogress';
@@ -151,7 +154,7 @@ class TicTacToeController extends Controller
         return response()->json([
             'state' => $state,
             'move' => $returnMove,
-
+            'winner' => $winner
         ]);
     }
 
@@ -180,7 +183,6 @@ class TicTacToeController extends Controller
         $i = 1;
 
         while ($i <= 3) {
-            //if 1 = 2 and 1 = 3 then 2 most also = 3
             if ($board[$i][1] !== null and $board[$i][1] === $board[$i][2] and $board[$i][1] === $board[$i][3]) {
                 $bingo = true;
                 break;
@@ -200,6 +202,8 @@ class TicTacToeController extends Controller
 
             $i++;
         }
+
+        dump($board);
 
         return $bingo;
     }

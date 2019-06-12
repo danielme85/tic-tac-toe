@@ -2,7 +2,9 @@
     <div class="row justify-content-center" style="margin-top:50px;">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Tic-Tac-Toe # Status:<span>{{state}}</span></div>
+                <div class="card-header">
+                    Tic-Tac-Toe # Status:<span>{{state}}</span>
+                </div>
                 <div class="card-body">
                     <div v-if="loading">
                         <p>Please wait, loading data....</p>
@@ -11,6 +13,7 @@
                         <div class="row" style="margin-top:25px; margin-bottom:25px;">
                             <div class="col-12 text-center">
                                 <b>{{players['X'].name}} (X)</b> VS <b>{{players['O'].name}} (O)</b>
+                                <h3 v-if="done && result">{{result}}</h3>
                             </div>
                         </div>
                         <div class="row justify-content-center">
@@ -94,10 +97,11 @@
                 gameUid: null,
                 errors: [],
                 players: null,
-                turn: 'X',
                 newPlayerName: null,
                 nameValidationErrors: null,
-                highScores: null
+                highScores: null,
+                winner: null,
+                result: null
             }
         },
         mounted: function() {
@@ -113,9 +117,9 @@
                         this.done = false;
                         this.gameUid = null;
                         this.players = null;
-                        this.turn = 'X';
+                        this.winner = null;
                         this.newPlayerName = null;
-                        this.nameValidationErrors = null
+                        this.nameValidationErrors = null;
                         this.loading = false;
                     })
                     .catch(error => {
@@ -124,7 +128,7 @@
                     });
             },
             clickBox: function (event) {
-                if (this.state !== 'winner' || this.state !== 'draw') {
+                if (!this.done) {
                     this.updateBoard(event.target.id, 'X');
                     this.setPlayerMove(event.target.id, 'X');
                 }
@@ -169,6 +173,7 @@
                     .then(response => {
                         this.state = response.data.state;
                         this.done = false;
+                        this.winner = null;
                         this.gameUid = response.data.gameUid;
                         this.players = response.data.players;
                         this.loading = false;
@@ -195,13 +200,11 @@
                     })
                     .then(response => {
                         this.state = response.data.state;
-                        this.checkIfdone();
-                        this.turn = 'O';
+                        this.winner = response.data.winner;
                         if (this.done === false && response.data.move) {
                             this.updateBoard(response.data.move, 'O');
-                            this.checkIfdone();
-                            this.turn = 'X';
                         }
+                        this.checkIfdone();
                     })
                     .catch(error => {
                         this.errors.push(error.message);
@@ -225,11 +228,11 @@
                     $('.grid-cell').attr("disabled", true);
                 }
                 if (this.state === 'winner') {
-                    let player = this.players[this.turn];
-                    alert('And the winner is:' + player.name);
+                    let player = this.players[this.winner];
+                    this.result = 'And the winner is:' + player.name;
                 }
                 else if (this.state === 'draw') {
-                    alert('Oh boi its a draw!');
+                    this.result = 'Oh boi its a draw!';
                 }
             }
         },

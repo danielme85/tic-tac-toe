@@ -1816,6 +1816,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -1827,10 +1830,11 @@ __webpack_require__.r(__webpack_exports__);
       gameUid: null,
       errors: [],
       players: null,
-      turn: 'X',
       newPlayerName: null,
       nameValidationErrors: null,
-      highScores: null
+      highScores: null,
+      winner: null,
+      result: null
     };
   },
   mounted: function mounted() {
@@ -1847,7 +1851,7 @@ __webpack_require__.r(__webpack_exports__);
         _this.done = false;
         _this.gameUid = null;
         _this.players = null;
-        _this.turn = 'X';
+        _this.winner = null;
         _this.newPlayerName = null;
         _this.nameValidationErrors = null;
         _this.loading = false;
@@ -1858,7 +1862,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     clickBox: function clickBox(event) {
-      if (this.state !== 'winner' || this.state !== 'draw') {
+      if (!this.done) {
         this.updateBoard(event.target.id, 'X');
         this.setPlayerMove(event.target.id, 'X');
       }
@@ -1906,6 +1910,7 @@ __webpack_require__.r(__webpack_exports__);
       }).then(function (response) {
         _this4.state = response.data.state;
         _this4.done = false;
+        _this4.winner = null;
         _this4.gameUid = response.data.gameUid;
         _this4.players = response.data.players;
         _this4.loading = false;
@@ -1933,18 +1938,13 @@ __webpack_require__.r(__webpack_exports__);
         value: 'X'
       }).then(function (response) {
         _this6.state = response.data.state;
-
-        _this6.checkIfdone();
-
-        _this6.turn = 'O';
+        _this6.winner = response.data.winner;
 
         if (_this6.done === false && response.data.move) {
           _this6.updateBoard(response.data.move, 'O');
-
-          _this6.checkIfdone();
-
-          _this6.turn = 'X';
         }
+
+        _this6.checkIfdone();
       })["catch"](function (error) {
         _this6.errors.push(error.message);
       });
@@ -1967,10 +1967,10 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       if (this.state === 'winner') {
-        var player = this.players[this.turn];
-        alert('And the winner is:' + player.name);
+        var player = this.players[this.winner];
+        this.result = 'And the winner is:' + player.name;
       } else if (this.state === 'draw') {
-        alert('Oh boi its a draw!');
+        this.result = 'Oh boi its a draw!';
       }
     }
   }
@@ -37324,7 +37324,7 @@ var render = function() {
       _c("div", { staticClass: "col-md-6" }, [
         _c("div", { staticClass: "card" }, [
           _c("div", { staticClass: "card-header" }, [
-            _vm._v("Tic-Tac-Toe # Status:"),
+            _vm._v("\n                Tic-Tac-Toe # Status:"),
             _c("span", [_vm._v(_vm._s(_vm.state))])
           ]),
           _vm._v(" "),
@@ -37352,7 +37352,11 @@ var render = function() {
                         _vm._v(" VS "),
                         _c("b", [
                           _vm._v(_vm._s(_vm.players["O"].name) + " (O)")
-                        ])
+                        ]),
+                        _vm._v(" "),
+                        _vm.done && _vm.result
+                          ? _c("h3", [_vm._v(_vm._s(_vm.result))])
+                          : _vm._e()
                       ])
                     ]
                   ),
