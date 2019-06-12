@@ -203,8 +203,6 @@ class TicTacToeController extends Controller
             $i++;
         }
 
-        dump($board);
-
         return $bingo;
     }
 
